@@ -1,4 +1,4 @@
-#pramga once
+#pragma once
 
 // Defines a plain data structure representing a single EEG sample.
 

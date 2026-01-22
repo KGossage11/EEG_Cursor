@@ -1,31 +1,41 @@
 #pragma once
 
 /*
-Defines the interface and contract for a fixed-capacity single-writer,
-single-reader ring buffer.
-Implementation details are defined in RingBuffer.cpp
+Lock-free single-writer / single-reader ring buffer.
+Fixed capacity.
+Overwrite-on-full semantics.
 */
 
+#include <vector>
+#include <atomic>
 #include <cstddef>
-#include <cstdint>
 
 template <typename T>
 class RingBuffer {
 public:
-    explicit RingBuffer(size_t capacity);
-    ~RingBuffer();
+    explicit RingBuffer(size_t capacity)
+            : buffer_(capacity),
+              capacity_(capacity),
+              writeIndex_(0) {}
 
-    // Disable copy constructor and assignment operator
-    RingBuffer(const RingBuffer&) = delete;
-    RingBuffer& operator=(const RingBuffer&) = delete;
+    ~RingBuffer() = default;
 
-    void push(const T& item);
-    bool readLatest(T& out) const;
-    size_t capacity() const;
+    void push(const T& value) {
+        buffer_[writeIndex_ % capacity_] = value;
+        writeIndex_.fetch_add(1, std::memory_order_release);
+    }
+
+    bool readLatest(T& out) const {
+        size_t index = writeIndex_.load(std::memory_order_acquire);
+        if (index == 0) {
+            return false;
+        }
+        out = buffer_[(index - 1) % capacity_];
+        return true;
+    }
 
 private:
-    T* buffer_;
-    size_t capacity_;
-    size_t writeIndex_;
-    size_t readIndex_;
+    std::vector<T> buffer_;
+    const size_t capacity_;
+    std::atomic<size_t> writeIndex_;
 };

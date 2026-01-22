@@ -7,13 +7,16 @@ execution time budgets, and skips work when deadlines are missed.
 #include "DecodeThread.h"
 #include "../timing/Clock.h"
 #include "../timing/TimingBudget.h"
+#include "CursorIntent.h"
 
 #include <thread>
+#include <algorithm>
+#include <cmath>
 
-DecodeThread::DecodeThread(RingBuffer<EegSample>& inputBuffer, IntentBuffer<int>& intentBuffer)
+DecodeThread::DecodeThread(RingBuffer<EegSample>& inputBuffer, IntentBuffer<CursorIntent>& intentBuffer)
     : inputBuffer_(inputBuffer), intentBuffer_(intentBuffer), running_(false) {}
 
-DecopdeThread::~DecodeThread() {
+DecodeThread::~DecodeThread() {
     stop();
 }
 
@@ -30,14 +33,31 @@ void DecodeThread::stop() {
 }
 
 void DecodeThread::run() {
-    const int64_t periodMicroseconds = TimingBudget::DecodePeriodMicroseconds();
+    const int64_t periodMicroseconds = TimingBudget::DecodePeriodMicroseconds;
     while(running_) { 
         int64_t startTime = Clock::nowMicroseconds();
-        EegSample latest;
-        if (inputbuffer_.readLatest(latest)) {
-            DecodeWindow window{&latest, 1};
 
-            int intent = 0;
+        EegSample sample;
+        if (inputBuffer_.readLatest(sample)) {
+
+            float dx = 0.0f;
+            float dy = 0.0f;
+
+            for (int i = 0; i < 4; ++i) {
+                dx += sample.channels[i];
+            }
+            for (int i = 4; i < 8; ++i) {
+                dy += sample.channels[i];
+            }
+
+            dx *= 0.25f;
+            dy *= 0.25f;
+
+            CursorIntent intent;
+            intent.dx = dx;
+            intent.dy = dy;
+            intent.confidence = std::min(1.0f, std::abs(dx) + std::abs(dy));
+
             intentBuffer_.write(intent);
         }
 

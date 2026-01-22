@@ -14,10 +14,11 @@ The thread is timing-budget aware.
 #include "../buffers/DecodeWindow.h"
 #include "../buffers/IntentBuffer.h"
 #include "../buffers/EegSample.h"
+#include "CursorIntent.h"
 
 class DecodeThread {
 public:
-    DecodeThread(RingBuffer<EEGSample>& eegBuffer, IntentBuffer<int>& intentBuffer);
+    DecodeThread(RingBuffer<EegSample>& inputBuffer, IntentBuffer<CursorIntent>& intentBuffer);
     ~DecodeThread();
 
     void start();
@@ -25,8 +26,8 @@ public:
 
 private:
     void run();
-    RingBuffer<EEGSample>& inputBuffer_;
-    IntentBuffer<int>& intentBuffer_;
+    RingBuffer<EegSample>& inputBuffer_;
+    IntentBuffer<CursorIntent>& intentBuffer_;
     std::atomic<bool> running_;
     std::thread thread_;
-}
+};

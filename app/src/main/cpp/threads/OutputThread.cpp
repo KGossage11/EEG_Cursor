@@ -5,32 +5,44 @@ stable output with no backlog or queueing behavior.
 */
 
 #include "OutputThread.h"
+#include "CursorIntent.h"
 
-OuputThread::OutputThread(IntentBuffer<int>& intentBuffer)
-    : intentBuffer_(intentBuffer), running_(false) {}
+#include <thread>
+#include <algorithm>
 
-OuputThread::~OuputThread() {
+OutputThread::OutputThread(
+        IntentBuffer<CursorIntent>& intentBuffer)
+        : intentBuffer_(intentBuffer),
+          running_(false),
+          cursorX_(0.0f),
+          cursorY_(0.0f) {}
+
+OutputThread::~OutputThread() {
     stop();
 }
 
-void Outputthread::start() {
+void OutputThread::start() {
     running_ = true;
-    thread_ = std::thread(&OutputThread::run, this)
+    thread_ = std::thread(&OutputThread::run, this);
 }
 
 void OutputThread::stop() {
     running_ = false;
-    if(thread_.joinable()) {
+    if (thread_.joinable()) {
         thread_.join();
     }
 }
 
-woid Outputthread::run() {
-    while(running_) {
-        int intent;
-        if (intentbuffer_.read(intent)){
-            // Process the intent to produce stable output
-            // (Implementation of output processing goes here)
+void OutputThread::run() {
+    while (running_) {
+        CursorIntent intent;
+        if (intentBuffer_.read(intent)) {
+
+            cursorX_ += intent.dx * 0.01f;
+            cursorY_ += intent.dy * 0.01f;
+
+            cursorX_ = std::clamp(cursorX_, -1.0f, 1.0f);
+            cursorY_ = std::clamp(cursorY_, -1.0f, 1.0f);
         }
     }
 }

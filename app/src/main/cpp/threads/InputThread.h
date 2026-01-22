@@ -9,12 +9,12 @@ and writing them into the ring buffer.
 #include <thread>
 #include <atomic>
 
-#include "buffers/RingBuffer.h"
-#include "buffers/EEGSample.h"
+#include "../buffers/RingBuffer.h"
+#include "../buffers/EegSample.h"
 
 class InputThread {
 public:
-    explicit InputThread(RingBuffer<EEGSample>& buffer);
+    explicit InputThread(RingBuffer<EegSample>& buffer);
     ~InputThread();
 
     void start();
@@ -22,7 +22,7 @@ public:
 
 private:
     void run();
-    RingBuffer<EEGSample>& buffer_;
+    RingBuffer<EegSample>& buffer_;
     std::atomic<bool> running_;
     std::thread thread_;
 };

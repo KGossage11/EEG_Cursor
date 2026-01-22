@@ -9,11 +9,12 @@ stable output. No rendering, platform, or UI logic exists here.
 #include <atomic>
 #include <thread>
 
+#include "CursorIntent.h"
 #include "../buffers/IntentBuffer.h"
 
 class OutputThread {
 public:
-    OutputThread(IntentBuffer<int>& intentBuffer);
+    OutputThread(IntentBuffer<CursorIntent>& intentBuffer);
     ~OutputThread();
 
     void start();
@@ -22,7 +23,9 @@ public:
 private:
     void run();
 
-    IntentBuffer<int>& intentBuffer_;
+    IntentBuffer<CursorIntent>& intentBuffer_;
     std::atomic<bool> running_;
     std::thread thread_;
-}
+    float cursorX_;
+    float cursorY_;
+};
